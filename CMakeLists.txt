@@ -22,13 +22,13 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 file(GLOB common_sources "src/Common/*.cpp")
-file(GLOB navio_sources "src/Navio+/*.cpp")
+# file(GLOB navio_sources "src/Navio+/*.cpp")
 file(GLOB navio2_sources "src/Navio2/*.cpp")
 file(GLOB examples_sources "src/Examples/AHRS.cpp")
 
 add_library(${PROJECT_NAME} SHARED
   ${common_sources}
-  ${navio_sources}
+  # ${navio_sources}
   ${navio2_sources}
   ${examples_sources}
 )
@@ -39,16 +39,24 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 
 ament_export_include_directories(include)
-ament_export_interfaces(export_${PROJECT_NAME})
+ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_libraries(${PROJECT_NAME})
 
 
-# add_executable(ahrs src/Examples/AHRS.cpp)
+add_executable(ahrs src/Examples/AHRS.cpp)
 
-# target_link_libraries(ahrs 
-#   navio_vendor
-# )
+target_include_directories(ahrs PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
 
+target_link_libraries(ahrs
+  navio_vendor
+)
+
+install(TARGETS
+    ahrs
+    DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -63,13 +71,15 @@ if(BUILD_TESTING)
   # endif()
 endif()
 
-ament_package()
-
-install(DIRECTORY include/
-  DESTINATION include)
+install(DIRECTORY include/${PROJECT_NAME}
+DESTINATION include/${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+EXPORT export_${PROJECT_NAME}
+LIBRARY DESTINATION lib
+ARCHIVE DESTINATION lib
+RUNTIME DESTINATION bin
+INCLUDES DESTINATION include
+)
+
+ament_package()
